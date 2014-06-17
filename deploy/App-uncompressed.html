@@ -138,7 +138,7 @@ Ext.override(Rally.ui.menu.bulk.MenuItem, {
                             console.log('me.successfulRecords after update and concat');
                             console.log(me.successfulRecords);
 
-                            if(me.dataToUpdate.length !== 0) {
+                            if (me.successfulRecords.length !== 0) {
                                 me.onSuccess(me.successfulRecords, unsuccessfulRecords, args, "successful update");
                             } else {
                                 Rally.ui.notify.Notifier.showError({
