@@ -25,7 +25,7 @@
             },
 
             prepareRecords: function(records, selectedState) {
-                console.log('PortfolioItemBulkStateChanger.RecordMenuItemPortfolioItemState.prepareRecords');
+                // console.log('PortfolioItemBulkStateChanger.RecordMenuItemPortfolioItemState.prepareRecords');
                 var me = this;
                 var successfulRecords = [];
 
@@ -52,7 +52,7 @@
                         }
                     }
                 });
-                console.log(successfulRecords);
+                // console.log(successfulRecords);
                 return successfulRecords;
             },
 
@@ -60,17 +60,17 @@
         },
 
         constructor: function(config) {
-            console.log('PortfolioItemBulkStateChanger.RecordMenuItemPortfolioItemState.constructor:');
-            console.log('this.records');
-            console.log(this.records);
+            // console.log('PortfolioItemBulkStateChanger.RecordMenuItemPortfolioItemState.constructor:');
+            // console.log('this.records');
+            // console.log(this.records);
             this.mergeConfig(config);
             this.callParent(arguments);
         },
 
         _onBulkStateClicked: function() {
-            console.log('PortfolioItemBulkStateChanger.RecordMenuItemPortfolioItemState._onBulkStateClicked');
-            console.log('selectedRecords:');
-            console.log(this.records);
+            // console.log('PortfolioItemBulkStateChanger.RecordMenuItemPortfolioItemState._onBulkStateClicked');
+            // console.log('selectedRecords:');
+            // console.log(this.records);
             Ext.create('PortfolioItemBulkStateChanger.PortfolioItemStateChooserDialog', {
                 autoShow: true,
                 records: this.records,
@@ -83,7 +83,7 @@
         },
 
         _onStateSelected: function(dialog, selectedState) {
-            console.log('PortfolioItemBulkStateChanger.RecordMenuItemPortfolioItemState._onStateSelected');
+            // console.log('PortfolioItemBulkStateChanger.RecordMenuItemPortfolioItemState._onStateSelected');
             if (this.onBeforeAction(this.records) === false) {
                 return;
             }
@@ -95,12 +95,12 @@
          * @inheritdoc
          */
         onSuccess: function (successfulRecords, unsuccessfulRecords, selectedState, errorMessage) {
-            console.log('PortfolioItemBulkStateChanger.RecordMenuItemPortfolioItemState.onSuccess');
-            console.log(this);
-            console.log('this.records:');
-            console.log(this.records);
-            console.log('successfulRecords:');
-            console.log(successfulRecords);
+            // console.log('PortfolioItemBulkStateChanger.RecordMenuItemPortfolioItemState.onSuccess');
+            // console.log(this);
+            // console.log('this.records:');
+            // console.log(this.records);
+            // console.log('successfulRecords:');
+            // console.log(successfulRecords);
             var message = [
                 'State updated for',
                 successfulRecords.length,

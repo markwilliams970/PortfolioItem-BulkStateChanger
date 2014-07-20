@@ -3,7 +3,7 @@
 <head>
     <title>PortfolioItem-BulkStateChanger</title>
 
-    <script type="text/javascript" src="https://rally1.rallydev.com/apps/2.0rc3/sdk.js"></script>
+    <script type="text/javascript" src="/apps/2.0rc3/sdk.js"></script>
 
     <script type="text/javascript">
         Rally.onReady(function () {
@@ -13,13 +13,102 @@
     items: [
         {
             xtype: 'container',
+            itemId: 'piTypePicker',
+            padding: '10px'
+        },
+        {
+            xtype: 'container',
             itemId: 'gridContainer',
             padding: '10px'
         }
     ],
 
+    _portfolioItemTypes: {},
+    _portfolioItemOrdinalsByTypePath: {},
+    _portfolioItemComboBox: null,
+    _typeFeature: null,
+    _portfolioItemGrid: null,
+    _selectedPortfolioItemOrdinal: null,
+
     launch: function() {
-        this.down('#gridContainer').add({
+        this._getPITypes();
+    },
+
+    _getPITypes: function() {
+
+        //console.log('_getPITypes');
+        var me = this;
+
+        var piDataStore = Ext.create('Rally.data.wsapi.Store', {
+            model: 'TypeDefinition',
+            autoLoad: true,
+            fetch: true,
+            listeners: {
+                scope: this,
+                load: me._PITypeStoreLoaded
+            },
+            filters: [
+                {
+                    property: 'Parent.Name',
+                    operator: '=',
+                    value: 'Portfolio Item'
+                }
+            ]
+        });
+    },
+
+    _PITypeStoreLoaded: function(store, records) {
+        var me = this;
+        Ext.Array.each(records, function(piTypeRecord) {
+            var ordinal = piTypeRecord.get('Ordinal');
+            if (ordinal != -1) {
+                me._portfolioItemTypes[piTypeRecord.get('Name')] = piTypeRecord.get('TypePath');
+                me._portfolioItemOrdinalsByTypePath[piTypeRecord.get('TypePath')] = ordinal;
+            }
+        });
+        this._typeFeature = records[0].get('TypePath').toLowerCase();
+        this._buildUI();
+    },
+
+    _buildUI: function() {
+
+        var me = this;
+        var data = [];
+
+        Ext.iterate(me._portfolioItemTypes, function(name, typePath) {
+            data.push({"name": name, "type": typePath});
+        });
+
+        var artifactTypesStore = Ext.create('Ext.data.Store', {
+            fields: ['name', 'type'],
+            data: data
+        });
+
+        me._portfolioTypeCombobox = Ext.create('Ext.form.ComboBox', {
+            fieldLabel:   'Choose PortfolioItem Type',
+            store:        artifactTypesStore,
+            queryMode:    'local',
+            displayField: 'name',
+            valueField:   'type',
+            listeners: {
+                scope: this,
+                'select': me._getPortfolioItems
+            }
+        });
+
+        me.down("#piTypePicker").add(me._portfolioTypeCombobox);
+    },
+
+    _getPortfolioItems: function() {
+
+        var selectedPortfolioItemType = this._portfolioTypeCombobox.getValue();
+        this._selectedPortfolioItemOrdinal = this._portfolioItemOrdinalsByTypePath[selectedPortfolioItemType];
+
+        if (this._portfolioItemGrid) {
+            this._portfolioItemGrid.destroy();
+        }
+
+        this._portfolioItemGrid = this.down('#gridContainer').add({
             xtype: 'rallygrid',
             itemId: 'rallygrid',
             columnCfgs: [
@@ -31,7 +120,7 @@
             enableBulkEdit: true,
             showRowActionsColumn: true,
             storeConfig: {
-                model: 'portfolioitem/feature'
+                model: selectedPortfolioItemType
             }
         });
     }
@@ -69,10 +158,10 @@ Ext.override(Rally.ui.menu.bulk.MenuItem, {
      * @param args {Object} additional args passed to onSuccess and prepareRecords
      */
     saveRecords: function(records, args) {
-        console.log('PortfolioItemBulkStateChanger.MenuItem.saveRecords');
+        // console.log('PortfolioItemBulkStateChanger.MenuItem.saveRecords');
 
-        console.log('selectedRecords:');
-        console.log(records);
+        // console.log('selectedRecords:');
+        // console.log(records);
 
         var me = this;
 
@@ -89,14 +178,14 @@ Ext.override(Rally.ui.menu.bulk.MenuItem, {
 
         Deft.Promise.all(promises).then({
             success: function(hydratedRecords) {
-                console.log("hydratedRecords:");
-                console.log(hydratedRecords);
+                // console.log("hydratedRecords:");
+                // console.log(hydratedRecords);
 
                 var successfulRecords = me.prepareRecords(hydratedRecords, args);
                 me.successfulRecordsDueToNoChange = successfulRecords;
 
-                console.log("successfulRecords:");
-                console.log(successfulRecords);
+                // console.log("successfulRecords:");
+                // console.log(successfulRecords);
 
                 if (me.successfulRecordsDueToNoChange.length === records.length) {
                     me.onSuccess(me.successfulRecordsDueToNoChange, [], args);
@@ -105,20 +194,20 @@ Ext.override(Rally.ui.menu.bulk.MenuItem, {
                     var selectedState = args;
                     var selectedStateRef = selectedState.get('_ref');
 
-                    console.log('selectedStateRef:');
-                    console.log(selectedStateRef);
+                    // console.log('selectedStateRef:');
+                    // console.log(selectedStateRef);
 
                     var updateState = "";
                     if (selectedStateRef !== "") {
                         updateState = {'_ref': selectedStateRef};
                     }
 
-                    console.log('updateState:');
-                    console.log(updateState);
+                    // console.log('updateState:');
+                    // console.log(updateState);
 
                     me.dataToUpdate = _.difference(hydratedRecords, me.successfulRecordsDueToNoChange);
-                    console.log('dataToUpdate:');
-                    console.log(me.dataToUpdate);
+                    // console.log('dataToUpdate:');
+                    // console.log(me.dataToUpdate);
 
                     Rally.data.BulkRecordUpdater.updateRecords({
                         records: me.dataToUpdate,
@@ -126,17 +215,17 @@ Ext.override(Rally.ui.menu.bulk.MenuItem, {
                             State: updateState
                         },
                         success: function(failedRecords) {
-                            console.log('failedRecords');
-                            console.log(failedRecords);
+                            // console.log('failedRecords');
+                            // console.log(failedRecords);
                             var successfulUpdateRecords = _.difference(me.dataToUpdate, failedRecords);
                             var unsuccessfulRecords = failedRecords;
 
-                            console.log('successfulUpdateRecords:');
-                            console.log(successfulUpdateRecords);
+                            // console.log('successfulUpdateRecords:');
+                            // console.log(successfulUpdateRecords);
 
                             me.successfulRecords = me.successfulRecordsDueToNoChange.concat(successfulUpdateRecords);
-                            console.log('me.successfulRecords after update and concat');
-                            console.log(me.successfulRecords);
+                            // console.log('me.successfulRecords after update and concat');
+                            // console.log(me.successfulRecords);
 
                             if (me.successfulRecords.length !== 0) {
                                 me.onSuccess(me.successfulRecords, unsuccessfulRecords, args, "successful update");
@@ -147,7 +236,7 @@ Ext.override(Rally.ui.menu.bulk.MenuItem, {
                                 Ext.callback(me.onActionComplete, null, [me.successfulRecords, unsuccessfulRecords]);
                             }
                         },
-                        scope: this
+                        scope: me
                     });
                 }
             }
@@ -155,7 +244,7 @@ Ext.override(Rally.ui.menu.bulk.MenuItem, {
     },
 
     hydrateArtifact: function(artifact, scope) {
-        console.log('PortfolioItemBulkStateChanger.MenuItem.hydrateArtifact');
+        // console.log('PortfolioItemBulkStateChanger.MenuItem.hydrateArtifact');
         var deferred = Ext.create('Deft.Deferred');
         var me = scope;
 
@@ -203,7 +292,7 @@ Ext.override(Rally.ui.menu.bulk.MenuItem, {
             },
 
             prepareRecords: function(records, selectedState) {
-                console.log('PortfolioItemBulkStateChanger.RecordMenuItemPortfolioItemState.prepareRecords');
+                // console.log('PortfolioItemBulkStateChanger.RecordMenuItemPortfolioItemState.prepareRecords');
                 var me = this;
                 var successfulRecords = [];
 
@@ -230,7 +319,7 @@ Ext.override(Rally.ui.menu.bulk.MenuItem, {
                         }
                     }
                 });
-                console.log(successfulRecords);
+                // console.log(successfulRecords);
                 return successfulRecords;
             },
 
@@ -238,17 +327,17 @@ Ext.override(Rally.ui.menu.bulk.MenuItem, {
         },
 
         constructor: function(config) {
-            console.log('PortfolioItemBulkStateChanger.RecordMenuItemPortfolioItemState.constructor:');
-            console.log('this.records');
-            console.log(this.records);
+            // console.log('PortfolioItemBulkStateChanger.RecordMenuItemPortfolioItemState.constructor:');
+            // console.log('this.records');
+            // console.log(this.records);
             this.mergeConfig(config);
             this.callParent(arguments);
         },
 
         _onBulkStateClicked: function() {
-            console.log('PortfolioItemBulkStateChanger.RecordMenuItemPortfolioItemState._onBulkStateClicked');
-            console.log('selectedRecords:');
-            console.log(this.records);
+            // console.log('PortfolioItemBulkStateChanger.RecordMenuItemPortfolioItemState._onBulkStateClicked');
+            // console.log('selectedRecords:');
+            // console.log(this.records);
             Ext.create('PortfolioItemBulkStateChanger.PortfolioItemStateChooserDialog', {
                 autoShow: true,
                 records: this.records,
@@ -261,7 +350,7 @@ Ext.override(Rally.ui.menu.bulk.MenuItem, {
         },
 
         _onStateSelected: function(dialog, selectedState) {
-            console.log('PortfolioItemBulkStateChanger.RecordMenuItemPortfolioItemState._onStateSelected');
+            // console.log('PortfolioItemBulkStateChanger.RecordMenuItemPortfolioItemState._onStateSelected');
             if (this.onBeforeAction(this.records) === false) {
                 return;
             }
@@ -273,12 +362,12 @@ Ext.override(Rally.ui.menu.bulk.MenuItem, {
          * @inheritdoc
          */
         onSuccess: function (successfulRecords, unsuccessfulRecords, selectedState, errorMessage) {
-            console.log('PortfolioItemBulkStateChanger.RecordMenuItemPortfolioItemState.onSuccess');
-            console.log(this);
-            console.log('this.records:');
-            console.log(this.records);
-            console.log('successfulRecords:');
-            console.log(successfulRecords);
+            // console.log('PortfolioItemBulkStateChanger.RecordMenuItemPortfolioItemState.onSuccess');
+            // console.log(this);
+            // console.log('this.records:');
+            // console.log(this.records);
+            // console.log('successfulRecords:');
+            // console.log(successfulRecords);
             var message = [
                 'State updated for',
                 successfulRecords.length,
@@ -355,6 +444,7 @@ Ext.override(Rally.ui.menu.bulk.MenuItem, {
         _portfolioItemStateCombobox: null,
         _portfolioItemStateStore: null,
         _selectedState: null,
+        _portfolioItemRecords: null,
 
         items: [
             {
@@ -396,11 +486,44 @@ Ext.override(Rally.ui.menu.bulk.MenuItem, {
         ],
 
         constructor: function(config) {
+
+            var me = this;
+
             this.callParent(arguments);
 
             if (this.autoCenter) {
                 this.scrollListener.saveScrollPosition = true;
             }
+
+            if (this.records) {
+                this._portfolioItemRecords = this.records;
+            }
+
+            // Need to determine Type of PortfolioItem from the set of records we've been handed
+            var selectedPortfolioItemType = me._portfolioItemRecords[0].get('_type');
+
+            // Then populate our State dropdown with States appropriate to that type
+            var piTypeDefStore = Ext.create('Rally.data.wsapi.Store', {
+                model: 'TypeDefinition',
+                autoLoad: true,
+                fetch: true,
+                listeners: {
+                    scope: this,
+                    load: me._getPortfolioItemAttributeDefs
+                },
+                filters: [
+                    {
+                        property: 'Parent.Name',
+                        operator: '=',
+                        value: 'Portfolio Item'
+                    },
+                    {
+                        property: 'TypePath',
+                        operator: '=',
+                        value: selectedPortfolioItemType
+                    }
+                ]
+            });
 
         },
 
@@ -425,27 +548,6 @@ Ext.override(Rally.ui.menu.bulk.MenuItem, {
             this.down('#confirmButton').hide();
             this.down('#cancelButton').hide();
 
-            var piTypeDefStore = Ext.create('Rally.data.wsapi.Store', {
-                model: 'TypeDefinition',
-                autoLoad: true,
-                fetch: true,
-                listeners: {
-                    scope: this,
-                    load: me._getPortfolioItemAttributeDefs
-                },
-                filters: [
-                    {
-                        property: 'Parent.Name',
-                        operator: '=',
-                        value: 'Portfolio Item'
-                    },
-                    {
-                        property: 'Ordinal',
-                        operator: '=',
-                        value: 0
-                    }
-                ]
-            });
         },
 
         _getPortfolioItemAttributeDefs: function(store, records) {
@@ -587,5 +689,6 @@ Ext.override(Rally.ui.menu.bulk.MenuItem, {
 
     </style>
 </head>
-<body></body>
+<body>
+</body>
 </html>

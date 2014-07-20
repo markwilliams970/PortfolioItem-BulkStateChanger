@@ -65,10 +65,10 @@
          * @param args {Object} additional args passed to onSuccess and prepareRecords
          */
         saveRecords: function(records, args) {
-            console.log('PortfolioItemBulkStateChanger.MenuItem.saveRecords');
+            // console.log('PortfolioItemBulkStateChanger.MenuItem.saveRecords');
 
-            console.log('selectedRecords:');
-            console.log(records);
+            // console.log('selectedRecords:');
+            // console.log(records);
 
             var me = this;
 
@@ -85,14 +85,14 @@
 
             Deft.Promise.all(promises).then({
                 success: function(hydratedRecords) {
-                    console.log("hydratedRecords:");
-                    console.log(hydratedRecords);
+                    // console.log("hydratedRecords:");
+                    // console.log(hydratedRecords);
 
                     var successfulRecords = me.prepareRecords(hydratedRecords, args);
                     me.successfulRecordsDueToNoChange = successfulRecords;
 
-                    console.log("successfulRecords:");
-                    console.log(successfulRecords);
+                    // console.log("successfulRecords:");
+                    // console.log(successfulRecords);
 
                     if (me.successfulRecordsDueToNoChange.length === records.length) {
                         me.onSuccess(me.successfulRecordsDueToNoChange, [], args);
@@ -101,20 +101,20 @@
                         var selectedState = args;
                         var selectedStateRef = selectedState.get('_ref');
 
-                        console.log('selectedStateRef:');
-                        console.log(selectedStateRef);
+                        // console.log('selectedStateRef:');
+                        // console.log(selectedStateRef);
 
                         var updateState = "";
                         if (selectedStateRef !== "") {
                             updateState = {'_ref': selectedStateRef};
                         }
 
-                        console.log('updateState:');
-                        console.log(updateState);
+                        // console.log('updateState:');
+                        // console.log(updateState);
 
                         me.dataToUpdate = _.difference(hydratedRecords, me.successfulRecordsDueToNoChange);
-                        console.log('dataToUpdate:');
-                        console.log(me.dataToUpdate);
+                        // console.log('dataToUpdate:');
+                        // console.log(me.dataToUpdate);
 
                         Rally.data.BulkRecordUpdater.updateRecords({
                             records: me.dataToUpdate,
@@ -122,17 +122,17 @@
                                 State: updateState
                             },
                             success: function(failedRecords) {
-                                console.log('failedRecords');
-                                console.log(failedRecords);
+                                // console.log('failedRecords');
+                                // console.log(failedRecords);
                                 var successfulUpdateRecords = _.difference(me.dataToUpdate, failedRecords);
                                 var unsuccessfulRecords = failedRecords;
 
-                                console.log('successfulUpdateRecords:');
-                                console.log(successfulUpdateRecords);
+                                // console.log('successfulUpdateRecords:');
+                                // console.log(successfulUpdateRecords);
 
                                 me.successfulRecords = me.successfulRecordsDueToNoChange.concat(successfulUpdateRecords);
-                                console.log('me.successfulRecords after update and concat');
-                                console.log(me.successfulRecords);
+                                // console.log('me.successfulRecords after update and concat');
+                                // console.log(me.successfulRecords);
 
                                 if(me.dataToUpdate.length !== 0) {
                                     me.onSuccess(me.successfulRecords, unsuccessfulRecords, args, "successful update");

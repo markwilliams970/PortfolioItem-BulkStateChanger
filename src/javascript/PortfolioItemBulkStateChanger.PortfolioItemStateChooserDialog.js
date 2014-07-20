@@ -53,6 +53,7 @@
         _portfolioItemStateCombobox: null,
         _portfolioItemStateStore: null,
         _selectedState: null,
+        _portfolioItemRecords: null,
 
         items: [
             {
@@ -94,11 +95,44 @@
         ],
 
         constructor: function(config) {
+
+            var me = this;
+
             this.callParent(arguments);
 
             if (this.autoCenter) {
                 this.scrollListener.saveScrollPosition = true;
             }
+
+            if (this.records) {
+                this._portfolioItemRecords = this.records;
+            }
+
+            // Need to determine Type of PortfolioItem from the set of records we've been handed
+            var selectedPortfolioItemType = me._portfolioItemRecords[0].get('_type');
+
+            // Then populate our State dropdown with States appropriate to that type
+            var piTypeDefStore = Ext.create('Rally.data.wsapi.Store', {
+                model: 'TypeDefinition',
+                autoLoad: true,
+                fetch: true,
+                listeners: {
+                    scope: this,
+                    load: me._getPortfolioItemAttributeDefs
+                },
+                filters: [
+                    {
+                        property: 'Parent.Name',
+                        operator: '=',
+                        value: 'Portfolio Item'
+                    },
+                    {
+                        property: 'TypePath',
+                        operator: '=',
+                        value: selectedPortfolioItemType
+                    }
+                ]
+            });
 
         },
 
@@ -123,27 +157,6 @@
             this.down('#confirmButton').hide();
             this.down('#cancelButton').hide();
 
-            var piTypeDefStore = Ext.create('Rally.data.wsapi.Store', {
-                model: 'TypeDefinition',
-                autoLoad: true,
-                fetch: true,
-                listeners: {
-                    scope: this,
-                    load: me._getPortfolioItemAttributeDefs
-                },
-                filters: [
-                    {
-                        property: 'Parent.Name',
-                        operator: '=',
-                        value: 'Portfolio Item'
-                    },
-                    {
-                        property: 'Ordinal',
-                        operator: '=',
-                        value: 0
-                    }
-                ]
-            });
         },
 
         _getPortfolioItemAttributeDefs: function(store, records) {
